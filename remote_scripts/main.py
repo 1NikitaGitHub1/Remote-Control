@@ -22,9 +22,6 @@ from kivy.uix.textinput import TextInput
 
 from kivy.uix.boxlayout import BoxLayout 
 from kivy.uix.gridlayout import GridLayout  
-  
-from pyautogui import click 
-from pyautogui import moveRel  
 
 import asyncio
   
@@ -42,18 +39,19 @@ class Ip(BoxLayout):
     """GUI for working with a given IP address"""
 
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.orientation = 'horizontal'  
         self.ip = None
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.port = 5050
 
         self.label = Label(
             font_name="Roboto",
-            font_size=20,
+            font_size=15,
             text="IPv4",
             size_hint=(None, None),
-            size=(10, 30),
+            size=(25, 20),
             pos_hint={"center_x": 0, "center_y": 0.1}
         )
         self.add_widget(self.label)
@@ -78,25 +76,25 @@ class Ip(BoxLayout):
         self.add_widget(self.button)
 
 
-    def connect_to_server(self, ip):
+    def connect_to_server(self) -> None:
         """Set connection by ip"""
         try:
-            with socket.create_connection((ip, self.port), timeout=5) as sock:
-                print(f"Connection with {ip}:{self.port}")
+            self.client_socket.connect((self.text_input.text, self.port))
+            print("Successful connection")
         except Exception as e:
             print(f"Error connection: {e}\nData of ip will destroy")
             self.ip = ""
             self.text_input.text = ""
 
 
-    def on_button_click(self, instance):
+    def on_button_click(self, instance) -> None:
         """Checks the entered IP address.
            If the the entered ip adress has valid form keeped the self.ip if not display an error.
            The value can be deleted during the operetions.   
         """
         unvalide_ip = (self.text_input.text).split(".")
         if len(unvalide_ip) == 4: 
-            self.connect_to_server(self.ip)
+            self.connect_to_server()
             self.ip = self.text_input.text
             print("I saved ip")
         else:
@@ -169,8 +167,7 @@ class Program(App):
 
     def clickm(self, instance : None) -> None: 
         """Handles computer's click""" 
-        print("space") 
-        click() 
+        self.ip.client_socket.send("clc".encode('utf-8')) 
 
 
     def move(self, direction: str) -> None: 
@@ -178,20 +175,19 @@ class Program(App):
       Handles movement based on the direction string. 
       :param direction: One of 'up', 'down', 'left', 'right' 
       """ 
-      print(self.ip.ip)
       if direction == "up": 
-          moveRel(0, -SPEED_CURSOR) 
+          self.ip.client_socket.send("up".encode('utf-8'))
       elif direction == "down": 
-          moveRel(0, SPEED_CURSOR) 
+          self.ip.client_socket.send("bottom".encode('utf-8'))
       elif direction == "left": 
-          moveRel(-SPEED_CURSOR, 0) 
+          self.ip.client_socket.send("left".encode('utf-8'))
       elif direction == "right": 
-          moveRel(SPEED_CURSOR, 0) 
+          self.ip.client_socket.send("right".encode('utf-8'))
       # For special on_key_down function the condition 
       else: 
           self.clickm(None) 
      
-    def on_key_down(self, instance, keyboard, keycode, text, modifiers): 
+    def on_key_down(self, instance, keyboard, keycode, text, modifiers) -> None: 
       """ 
       Handling keys from player's keyboard. 
       """ 
