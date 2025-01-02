@@ -1,29 +1,38 @@
 import socket
 import pyautogui
+import webbrowser as wb
+import json
 
 SPEED = 10
 
 def handle_client(client_socket) -> None:
     """Handling the client's commands."""
-    # Словарь команд и соответствующих функций
+    
     commands = {
-        "shutdown": lambda: client_socket.send("Close connection".encode('utf-8')) or "BREAK",
-        "clc": lambda: pyautogui.click(),
-        "up": lambda: pyautogui.moveRel(0, -SPEED),
-        "bottom": lambda: pyautogui.moveRel(0, SPEED),
-        "left": lambda: pyautogui.moveRel(-SPEED, 0),
-        "right": lambda: pyautogui.moveRel(SPEED, 0),
+        "shutdown": lambda : client_socket.send("Close connection".encode('utf-8')) or "BREAK",
+        "clc": lambda : pyautogui.click(),
+        "up": lambda : pyautogui.moveRel(0, -SPEED),
+        "bottom": lambda : pyautogui.moveRel(0, SPEED),
+        "left": lambda : pyautogui.moveRel(-SPEED, 0),
+        "right": lambda : pyautogui.moveRel(SPEED, 0),
     }
 
+
     while True:
-        data = client_socket.recv(1024).decode('utf-8')
+        data = client_socket.recv(2048).decode('utf-8')
         print(f"Get command: {data}")
+        try:
+            received_data = json.loads(data)
+            open = lambda link: wb.open(link)
+            if received_data[0] == "ADD":
+                commands[received_data[1]] = lambda link=received_data[2]: wb.open(link)
+            print(commands)
+        except:
+            action = commands.get(data, lambda: client_socket.send(f"The command {data} accept.".encode('utf-8')))
+            result = action()  
 
-        action = commands.get(data, lambda: client_socket.send(f"The command {data} accept.".encode('utf-8')))
-        result = action()  # Выполняем действие из словаря
-
-        if result == "BREAK":  # Если команда "shutdown", завершаем цикл
-            break
+            if result == "BREAK":  
+                break
 
     client_socket.close()
 
