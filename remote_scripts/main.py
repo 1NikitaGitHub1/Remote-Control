@@ -37,7 +37,30 @@ WIDTH window
 HEIGHT window  
 """  
 SPEED_CURSOR = 30 
-  
+
+class IpNotFoundError(Popup):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        content = BoxLayout(orientation='vertical')
+        close = Button (    text='OK',
+                            on_press=self.dismiss, 
+                            pos_hint = {"center_x": 0.5},
+                            size_hint=(0.5, 0.5)
+                        )
+        info = Label(   text="Ip not found\nFirst of all\nenter ipv4 at the gui\nand then press OK",
+                        pos_hint = {"center_x": 0.5},
+                        font_size = 15, 
+                    )
+
+        content.add_widget(info)
+        content.add_widget(close)
+        self.content = content
+
+        self.title = "Error"
+        self.auto_dismiss = False
+        self.size_hint = (0.5, 0.5)
+        
+
 class BindLink(BoxLayout):
     """Bind Link Menu"""
     def __init__(self, client_socket, **kwargs) -> None:
@@ -76,6 +99,13 @@ class BindLink(BoxLayout):
 
     def add_link(self, instance) -> None:
         """Add a new link bind to menu panel"""
+
+        # checking on connection to server
+        try:
+            self.client_socket.send(b'')  
+        except OSError:
+            return IpNotFoundError().open()
+
         content = BoxLayout(orientation = 'vertical')
         close = Button(text="OK", size_hint = (1, 0.1))
         input_name = TextInput(hint_text="Enter web name", size_hint=(1, 0.2))
@@ -216,25 +246,32 @@ class ButtonsControl(GridLayout):
 
     def clickm(self, instance : None) -> None: 
         """Handles computer's click""" 
-        self.client_socket.send("clc".encode('utf-8')) 
+        try:
+            self.client_socket.send("clc".encode('utf-8')) 
+        except OSError:
+            return IpNotFoundError().open()
 
 
     def move(self, direction: str) -> None: 
-      """ 
-      Handles movement based on the direction string. 
-      :param direction: One of 'up', 'down', 'left', 'right' 
-      """ 
-      if direction == "up": 
-          self.client_socket.send("up".encode('utf-8'))
-      elif direction == "down": 
-          self.client_socket.send("bottom".encode('utf-8'))
-      elif direction == "left": 
-          self.client_socket.send("left".encode('utf-8'))
-      elif direction == "right": 
-          self.client_socket.send("right".encode('utf-8'))
-      # For special on_key_down function the condition 
-      else: 
-          self.clickm(None) 
+        """ 
+        Handles movement based on the direction string. 
+        :param direction: One of 'up', 'down', 'left', 'right' 
+        """ 
+        try:
+            if direction == "up": 
+                self.client_socket.send("up".encode('utf-8'))
+            elif direction == "down": 
+                self.client_socket.send("bottom".encode('utf-8'))
+            elif direction == "left": 
+                self.client_socket.send("left".encode('utf-8'))
+            elif direction == "right": 
+                self.client_socket.send("right".encode('utf-8'))
+            # For special on_key_down function the condition 
+            else: 
+                self.clickm(None) 
+        except OSError:
+            return IpNotFoundError().open()
+
 
 
     def button_on_press(self, instance) -> None: 
