@@ -171,31 +171,19 @@ class Ip(BoxLayout):
             print("I saved ip")
         else:
             print("Error 1\nIncorrect format ip")
-  
 
 
-class Program(App):  
-    """                                 
-    ░░██░░░░███░░░░░█░░░░░░░░█░░█░░░░░░░█░  
-    ░░███░░██░█░░░░███░░░░░░░█░░███░░░░░█░  
-    ░░█░██░█░░██░░░█░░█░░░░░░█░░█░██░░░░█░  
-    ░░█░░███░░░█░░█░░░░█░░░░░█░░█░░██░░░█░  
-    ░░█░░░░░░░░█░░█░░░░██░░░░█░░█░░░██░░█░  
-    ░░█░░░░░░░░█░░███████░░░░█░░█░░░░██░█░  
-    ░░█░░░░░░░░█░░█░░░░░░█░░░█░░█░░░░░█░█░  
-    ░░█░░░░░░░░█░░█░░░░░░█░░░█░░█░░░░░░██░   
-    """  
-     
-    def build(self) -> None:  
-        """Build element gui "↑", "←", "→", "↓" to control cursor""" 
-        Window.bind(on_key_down=self.on_key_down)  
-         
-        # root = BoxLayout(pos=(25, 200), orientation='vertical', spacing = 1, padding = 1) 
-        root = FloatLayout()
-
-        # add buttons top, left, right, bottom to app 
-
-        gl = GridLayout(rows = 3, size_hint=(None, None), size=(200, 200), pos = (50, 250), spacing = 15)  
+class ButtonsControl(GridLayout):
+    """Buttons control"""
+    def __init__(self, client_socket, **kwargs) -> None:
+        super().__init__(**kwargs)
+        Window.bind(on_key_down=self.on_key_down) 
+        self.client_socket = client_socket
+        self.rows = 3
+        self.size_hint=(None, None)
+        self.size=(200, 200)
+        self.pos = (50, 250)
+        self.spacing = 15
         signs = {  
             "↑": "up",  
             "←": "left",  
@@ -213,36 +201,22 @@ class Program(App):
                   
                 sign_key = Button(text = sign_key, font_name="DejaVuSans", font_size = 30, on_press=self.button_on_press)  
                   
-                gl.add_widget(sign_key)  
+                self.add_widget(sign_key)  
   
                 accept = False   
                   
                 del sign_key  
             elif i == 4: 
-                gl.add_widget(Button(text = "CLICK", on_press=self.clickm)) 
+                self.add_widget(Button(text = "CLICK", on_press=self.clickm)) 
                 accept = True 
             else:  
-                gl.add_widget(Widget())  
+                self.add_widget(Widget())  
                 accept = True  
-
-        
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # create object of gui classes 
-        self.ip = Ip(self.client_socket)
-        self.bind_link = BindLink(self.client_socket)
-        # Add elements to root widget  
-        root.add_widget(self.ip)
-        root.add_widget(gl)
-        root.add_widget(self.bind_link)
-        return root 
-    
-
-    
 
 
     def clickm(self, instance : None) -> None: 
         """Handles computer's click""" 
-        self.ip.client_socket.send("clc".encode('utf-8')) 
+        self.client_socket.send("clc".encode('utf-8')) 
 
 
     def move(self, direction: str) -> None: 
@@ -251,17 +225,32 @@ class Program(App):
       :param direction: One of 'up', 'down', 'left', 'right' 
       """ 
       if direction == "up": 
-          self.ip.client_socket.send("up".encode('utf-8'))
+          self.client_socket.send("up".encode('utf-8'))
       elif direction == "down": 
-          self.ip.client_socket.send("bottom".encode('utf-8'))
+          self.client_socket.send("bottom".encode('utf-8'))
       elif direction == "left": 
-          self.ip.client_socket.send("left".encode('utf-8'))
+          self.client_socket.send("left".encode('utf-8'))
       elif direction == "right": 
-          self.ip.client_socket.send("right".encode('utf-8'))
+          self.client_socket.send("right".encode('utf-8'))
       # For special on_key_down function the condition 
       else: 
           self.clickm(None) 
-     
+
+
+    def button_on_press(self, instance) -> None: 
+      """ 
+      Handling clicks in the GUI. 
+      """ 
+      button_to_direction = { 
+          "↑": "up", 
+          "↓": "down", 
+          "←": "left", 
+          "→": "right", 
+      } 
+      if instance.text in button_to_direction: 
+          self.move(button_to_direction[instance.text]) 
+
+
     def on_key_down(self, instance, keyboard, keycode, text, modifiers) -> None: 
       """ 
       Handling keys from player's keyboard. 
@@ -275,21 +264,38 @@ class Program(App):
       } 
       if text in key_to_direction: 
           self.move(key_to_direction[text]) 
- 
-    def button_on_press(self, instance) -> None: 
-      """ 
-      Handling clicks in the GUI. 
-      """ 
-      button_to_direction = { 
-          "↑": "up", 
-          "↓": "down", 
-          "←": "left", 
-          "→": "right", 
-      } 
-      if instance.text in button_to_direction: 
-          self.move(button_to_direction[instance.text]) 
-  
-  
-  
+
+
+
+class Program(App):  
+    """                                 
+    ░░██░░░░███░░░░░█░░░░░░░░█░░█░░░░░░░█░  
+    ░░███░░██░█░░░░███░░░░░░░█░░███░░░░░█░  
+    ░░█░██░█░░██░░░█░░█░░░░░░█░░█░██░░░░█░  
+    ░░█░░███░░░█░░█░░░░█░░░░░█░░█░░██░░░█░  
+    ░░█░░░░░░░░█░░█░░░░██░░░░█░░█░░░██░░█░  
+    ░░█░░░░░░░░█░░███████░░░░█░░█░░░░██░█░  
+    ░░█░░░░░░░░█░░█░░░░░░█░░░█░░█░░░░░█░█░  
+    ░░█░░░░░░░░█░░█░░░░░░█░░░█░░█░░░░░░██░   
+    """  
+     
+    def build(self) -> None:  
+        """Build element gui "↑", "←", "→", "↓" to control cursor""" 
+         
+         
+        root = FloatLayout()
+        
+        # basic socket
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # create object of gui classes 
+        self.buttons_control = ButtonsControl(self.client_socket)
+        self.ip = Ip(self.client_socket)
+        self.bind_link = BindLink(self.client_socket)
+        # Add elements to root widget  
+        root.add_widget(self.ip)
+        root.add_widget(self.buttons_control)
+        root.add_widget(self.bind_link)
+        return root  
+
 if __name__ == "__main__":  
     Program().run()
