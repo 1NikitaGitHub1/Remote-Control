@@ -1,5 +1,7 @@
+
 import json
 import socket
+
 
 from kivy.app import App 
  
@@ -24,11 +26,12 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.popup import Popup
 
+from kivy.core.audio_output import SoundLoader
+
 from kivy.graphics import Line, Color
 from kivy.uix.boxlayout import BoxLayout 
 from kivy.uix.gridlayout import GridLayout  
 
-import asyncio
   
 """  
 CONSTS  
@@ -48,6 +51,28 @@ class IpNotFoundError(Popup):
                             size_hint=(0.5, 0.5)
                         )
         info = Label(   text="Ip not found\nFirst of all\nenter ipv4 at the gui\nand then press OK",
+                        pos_hint = {"center_x": 0.5},
+                        font_size = 15, 
+                    )
+
+        content.add_widget(info)
+        content.add_widget(close)
+        self.content = content
+
+        self.title = "Error"
+        self.auto_dismiss = False
+        self.size_hint = (0.5, 0.5)
+
+class IncorrectFormatIp(Popup):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        content = BoxLayout(orientation='vertical')
+        close = Button (    text='OK',
+                            on_press=self.dismiss, 
+                            pos_hint = {"center_x": 0.5},
+                            size_hint=(0.5, 0.5)
+                        )
+        info = Label(   text="Incorrect format ip\nEnter like this\n192.168.0.102\n",
                         pos_hint = {"center_x": 0.5},
                         font_size = 15, 
                     )
@@ -104,6 +129,7 @@ class BindLink(BoxLayout):
         try:
             self.client_socket.send(b'')  
         except OSError:
+            SoundLoader.load('Error.mp3').play()
             return IpNotFoundError().open()
 
         content = BoxLayout(orientation = 'vertical')
@@ -200,7 +226,8 @@ class Ip(BoxLayout):
             self.ip = self.text_input.text
             print("I saved ip")
         else:
-            print("Error 1\nIncorrect format ip")
+            SoundLoader.load('Error.mp3').play()
+            return IncorrectFormatIp().open()
 
 
 class ButtonsControl(GridLayout):
@@ -249,6 +276,7 @@ class ButtonsControl(GridLayout):
         try:
             self.client_socket.send("clc".encode('utf-8')) 
         except OSError:
+            SoundLoader.load('Error.mp3').play()
             return IpNotFoundError().open()
 
 
@@ -268,8 +296,9 @@ class ButtonsControl(GridLayout):
                 self.client_socket.send("right".encode('utf-8'))
             # For special on_key_down function the condition 
             else: 
-                self.clickm(None) 
+                self.clickm(None)
         except OSError:
+            SoundLoader.load('Error.mp3').play()
             return IpNotFoundError().open()
 
 
